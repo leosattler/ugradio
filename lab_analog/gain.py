@@ -1,7 +1,7 @@
 #####################################################
 
 # Leonardo Satter Cassara. Berkeley, CA, 02/05/2014. 
-# Radio Astronomy code for central limit theorem. 
+# Radio Astronomy code to calculate Gain of an Amplifier. 
 
 #####################################################
 
@@ -28,9 +28,11 @@ y=gain(re,rc,c,x)
 plt.plot(x,y)
 plt.xscale('log')
 plt.axis([10e3,10e7,0,250000])
-plt.xlabel(r'$Log \ of \ Input \ Frequency$',size=24)
-plt.ylabel(r'$Gain$',size=24)
-plt.title(r'$Gain \ of \ the \ Amplifier \ for \ Input \ Frequency$',size=28)
-plt.text(10e4,150000,r'$g=\frac{R_C}{R_E}\sqrt{(1+R^{2}_{E}\omega^{2}C_{3}^{2})}$',size=26)
+plt.xlabel(r'Log of Input Frequency',size=25)
+plt.ylabel(r'Gain',size=25)
+plt.title(r'Gain of the Amplifier for Input Frequency',size=29)
+plt.text(10e4,150000,r'$g=\frac{R_C}{R_E}\sqrt{(1+R^{2}_{E}\omega^{2}C_{3}^{2})}$',size=27)
 plt.axvline(np.log10(1./(re*c)),color='g',ls='dashed')
+plt.rc('xtick', labelsize=23)
+plt.rc('ytick', labelsize=23)
 plt.show()

@@ -1,7 +1,7 @@
 #####################################################
 
 # Leonardo Satter Cassara. Berkeley, CA, 02/05/2014. 
-# Radio Astronomy code for central limit theorem. 
+# Radio Astronomy code for Std behavior with sample size. 
 
 #####################################################
 
@@ -69,13 +69,14 @@ for i in N:
 
 plt.plot(N,std,'bo')
 #plt.errorbar(N, std, xerr=None, yerr=0.04, fmt=None)
-plt.ylabel(r'Standard Deviation', size=23)
-plt.xlabel(r'Sample Size', size=23)
-plt.title(r'Behavior of Standard Deviation', size=27)
+plt.ylabel(r'Standard Deviation', size=33)
+plt.xlabel(r'Sample Size', size=33)
+plt.title(r'Behavior of Standard Deviation', size=39)
+plt.rc('xtick', labelsize=25)
+plt.rc('ytick', labelsize=25)
 
 ## Curve Fit
 plt.plot(N,np.std(x)/np.sqrt(N),'r-')
-plt.text{
 ##
 
 plt.show()

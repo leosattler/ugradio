@@ -1,7 +1,7 @@
 #####################################################
 
 # Leonardo Satter Cassara. Berkeley, CA, 02/05/2014. 
-# Radio Astronomy code for central limit theorem. 
+# Radio Astronomy code for LC Filter. 
 
 #####################################################
 
@@ -45,11 +45,13 @@ for i in y:
 
 
 plt.plot(x,Y)
-plt.xlabel(r'$Input \ Frequency$',size=24)
-plt.ylabel(r'$Impedance$',size=24)
-plt.title(r'$LC \ Filter \ Impedance \ variation$',size=28)
+plt.xlabel(r'Input Frequency',size=25)
+plt.ylabel(r'Impedance',size=25)
+plt.title(r'LC Filter Impedance variation',size=29)
 plt.axvline(x=r,color='g',ls='dashed')
-plt.text(1.07302*10**(6),3.280992*10**(8),r'$f_{max}='+str(r)+'$',size=26)
+plt.text(1.07302*10**(6),3.280992*10**(8),r'$f_{max}='+str(r)+'$',size=27)
+plt.rc('xtick', labelsize=24)
+plt.rc('ytick', labelsize=24)
 plt.show()
 
 

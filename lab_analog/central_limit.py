@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 #####################################################
 
 # Leonardo Satter Cassara. Berkeley, CA, 02/05/2014. 
@@ -44,6 +43,8 @@ res=[] # list with the means
 
 n=0
 
+count=1
+
 while n < i3:    
 
     for i in np.arange(i2):
@@ -64,22 +65,28 @@ print
 ######### Plot
 
 n, bins, patches = plt.hist(res, 50, normed=1, facecolor='g')
-plt.xlabel(r'$Means$', size=24)
-plt.ylabel(r'$Normalized Occurrences$', size=24)
-plt.title(r'$Histogram$', size=28)
-
+plt.xlabel(r'Means', size=33)
+plt.ylabel(r'Normalized Occurrences', size=33)
+plt.title(r'Histogram $' +str(count)+', \ n='+str(i3)+'$', size=39)
+plt.axis(size=20)
 m1=np.mean(res)
 s1=np.std(res)
 g=mlab.normpdf(bins,m1,s1)
+plt.rc('xtick', labelsize=25)
+plt.rc('ytick', labelsize=25)
 plt.plot(bins,g,'r-')
 
 plt.show()
+
+res=[]
 
 ######### Choosing another N
 
 s=raw_input('Choose another n? y/n ' )
 
 n=0
+
+count=count+1
 
 while s == 'y':
 
@@ -107,16 +114,23 @@ while s == 'y':
 ######### Plot
 
     n, bins, patches = plt.hist(res, 50, normed=1, facecolor='g')
-    plt.xlabel(r'$Means$', size=24)
-    plt.ylabel(r'$Normalized Occurrences$', size=24)
-    plt.title(r'$Histogram$', size=28)
+    plt.xlabel(r'Means', size=33)
+    plt.ylabel(r'Normalized Occurrences', size=33)
+    #plt.title(r'$Histogram$', size=28)
+    plt.title(r'Histogram  $' +str(count)+', \ n='+str(i3)+'$', size=39)
 
     m1=np.mean(res)
     s1=np.std(res)
     g=mlab.normpdf(bins,m1,s1)
     plt.plot(bins,g,'r-')
+    plt.rc('xtick', labelsize=25)
+    plt.rc('ytick', labelsize=25)
 
     plt.show()
+
+    res=[]
+
+    count=count+1
 
     s=raw_input('Choose another N? y/n ' )
 
@@ -126,6 +140,3 @@ else:
     print 'Bye!'
 
 
-=======
-save.py
->>>>>>> f03e506eed37f496d2d5e5b1115005e50b4d20df
