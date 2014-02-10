@@ -1,0 +1,535 @@
+\documentclass{article}
+\usepackage{amsmath,amsfonts}
+\usepackage{graphicx}
+\usepackage[margin=1.0in,letterpaper]{geometry}
+\usepackage{float}
+\usepackage{subfigure}
+
+% are used to denote commments, everything after it on this line is a comment and while not be processed 
+
+\begin{document}
+
+\title{Analog Circuit}
+\author{Leonardo Sattler Cassara, e-mail:leosattler@berkeley.com}
+\date{January 10, 2014}
+\maketitle
+
+\begin{abstract}
+In this lab we work on the physics of an analog circuit, by building a
+radio demodulator and an amplifier. We understand the physics behind the transmission of radiowaves and signal transmissions, by developing our own circuits using breadboards and analysing signals with an osciloscope. The design and construction were made in group by the following students: Isaac Domagalski, David Galbraith and Leonardo Sattler. At last, we study sources of noise related to electric circuits and develop Python codes (individually) to enhance its comprehension. 
+
+\end{abstract}
+
+
+\section{FM Demodulator} 
+
+In order to understand what is an analog circuit we built a radio receiver on a breadboard, by using electronic devices provided by the Undergraduate Lab at UC Berkeley. The basic concept of this device is, by the receiving
+of a radio signal it will, first, translate this signal into audio information and than enhance it by an electrical filter (see Fig.1). The scheme presented was used to reproduce FM (Frequency Modulated) waves from a source located in the lab. 
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.55]{cic-1.png}
+\caption {Sketch of the FM demodulator circuit built for this lab.} 
+\label{Fig:3}
+\end{figure}
+
+\begin{table}[H]
+\center
+\begin{tabular}{|c|c|}
+\hline
+Electric Component    &   Value    \\ 
+\hline
+$R_{1}$ & $33 \ \Omega$ \\ 
+\hline
+$R_{2}$ & $150 \ \Omega$ \\ 
+\hline
+$R_{3}$ & $150 \ \Omega$ \\ 
+\hline
+$R_{4}$ & $150 \ \Omega$ \\ 
+\hline
+$C_{1}$ & $22000 \ pF$ \\ 
+\hline
+$C_{2}$ & $10000 \ pF$ \\ 
+\hline
+$C_{3}$ & $10000 \ pF$ \\ 
+\hline
+$C_{4}$ & $10000 \ pF$ \\ 
+\hline
+$L$ & $1 \ \mu H$ \\ 
+\hline
+\end{tabular}
+\caption{Components specifications. The values were calculated by looking at reference tables for Resistors and Capacitors.} 
+\label{tab:1}
+\end{table}
+
+The very first part is an antenna that receives the signal from the FM source.
+The oscilating signal produces a flow of electrons that will run through the circuit 
+as an alternating current $AC$. The only external power here is the $+5V$ battery providing 
+direct curent $DC$, that will not be over the whole circuit. 
+
+The reason is because the capacitors $C_{2}$ and $C_{4}$ have their own job of blocking direct
+current. Made of parallel plates that, once in equilibrium after
+charged, no flow of electrons will pass by them. 
+From a practical point of view it devides the circuit, and the
+$+5V$ voltage source won't act on the electrical components after
+$C_{2}$ and $C_{4}$. The other elements act together creating electrical
+devices that will determine the working of the whole circuit. They are
+presented and described on the next sections.
+
+\subsection{RLC Filter}
+
+By using an antenna, it first captures the signal. After passing by
+$R_{1}$, it reaches a device that will translate the variable frequency
+wave into an Amplitude Modulated wave, which is a signal with a variable
+amplitude. It generates an \emph{envelope} over this signal, now called \emph{carrier} (see Fig.\ref{carrier-envelope}). This device, together with $R_{1}$, is known as RLC filter, and the other components are a \emph{Capacitor} and an \emph{Indutor} ($L$ on Fig.1). 
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.40]{envelope-carrier.png}
+\caption {Figure showing the wave after passing by the RLC filter. An envelope over the amplitude modulated signal, the carrier.} 
+\label{carrier-envelope}
+\end{figure}
+
+Series RLC circuits give minimum impedance at the so called Resonance Frequency. Parallel RLC (also known as 'tank', used here) give maximum \emph{impedance} (technical name for the resistence
+created by the circuit components) at their resonant frequency. It is used to short the entrance signal based on its frenquency. Our receiving signal is a faked FM station at $1.045 \text{ }MHz$. The resonant frequency is calculated with the following formula:
+
+\begin{equation}
+f_{0}=\frac{1}{2 \pi \sqrt{LC}},
+\label{eq:1}
+\end{equation}
+and by looking at Table 1 we have $f_{0}=1.073 \text{ }MHz$. 
+
+The basic
+physics behind this device is that Indutor and Capacitor store
+electromagnetic energy by themselves by the passing of an electric
+current. They store but also release, and this keep going as an
+oscilating pendulum, but the energy fades with time. This will
+generate a change in amplitude for the signal (recall that $Energy \text{
+  }\alpha \text{ }V^{2}$), and its minimum possible value will be
+the one closer to $f_{0}$. It is clearly shown by the equation
+
+\begin{equation}
+Z(\omega) = -j\frac{1}{C}\frac{\omega}{\omega^{2} - \omega^{2}_{0}},
+\label{eq:1}
+\end{equation}
+where $Z$ is the letter for impedance, $\omega=2 \pi f$ is the incoming frequency and $\omega_{0}=2 \pi f_{0}$ is the natural frequency of oscilation from Eq.1. It is straightforward to realize the growth of $Z$ as $\omega \rightarrow \omega_{0}$.
+
+Our working FM station produces waves at
+$1.045 \text{ }MHz$. We built our circuit with $R$, $C$ and
+$L$ that could match something close but not at $1.045 \text{
+}MHz$, creating high \emph{resistence} for these frequencies and
+allowing $f_{0}$ to survive (almost) alone after the filter. Fig.\ref{LC} shows the
+behavior of the impedance due to the $LC$ values chosen, and
+the maximum impedance happens on the $f_{max}$ specified on the graph,
+marked with the green dashed line. 
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.28]{1-7-1.png}
+\caption {Impedance response to a given frequency input. The value of $f_{max}$ corresponds to the one of maximum impedance, and as expected matchs with $f_{0}$.} 
+\label{LC}
+\end{figure}
+
+\subsection{Envelope Detector}
+
+\subsubsection{Biasing and Diode}
+
+Once we have a well behaved Amplitude Modulated signal, we use a \emph{Diode} ($D$ on Fig.1) to remove the negative part of the incoming wave, composed by the \emph{carrier} and the \emph{envelope} (see Fig.2). But first we apply a Voltage source ($+ \text{ }5V$) to power up the circuit. It adds a step voltage to the oscilating signal, basing it, and at the same time gives more current flow for the diode. The Resistors $R_{2}$ and $R_{3}$ act as voltage dividers, lowering its value through the circuit. 
+
+The diode works by allowing the current flow through only one direction:
+positive or negative (in our case positive). Since we have an alternating current on the circuit,
+the diode will block any backing current and no negative value of the
+oscilating wave will survive after that. This feature allows the capacitor only to charge, since no
+signal with opposte value will pass by it. It charges after each oscilation of the carrier wave, 
+never discharging until it reaches its maxima, when it will keep following its peaks. 
+The result is a wave profile as
+the one of the the envelope but with no negative part and no carrier,
+taken out by its association with a Resistor, presented
+next, creating a device that is presented next. 
+
+\subsubsection{RC Filter}
+
+In order to clean the internal waves of the envelope a RC Filter is
+used with the diode. They together are known as Envelope
+Detector, since the output will be only the positive part of the
+envelope originally travelling with a carrier. 
+
+The RC configuration used above is called \emph{Low Pass Filter}. It
+literally allows only small frequencies to survive, hence the
+desapearing internal waves (with high frequency in contrast to its
+envelope). As we can see on Fig.\ref{lastfilter}, the so-called cutoff
+frequency is the one at which the sgnal is atenuated by $3dB$, happening
+at 
+
+\begin{equation}
+\omega_{3dB}=\frac{1}{RC},
+\label{eq:1}
+\end{equation}
+defining the bandwith that survives due to this device. On the graph we
+see that the bandwith is composed by frequencies smaller than
+$\omega_{3dB}=106103.295$, placed on the left part before the vertical
+green dashed line.
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.31]{1-7-2.png}
+\caption {Graph showing the impedance response due to the input
+  frequency. The vertical green dashed line marks the \emph{cutoff
+   frequency}, and the horizontal one the $3dB$ of atenuation on the
+ input signal, corresponding to a $70.7\%$ of lost, defining the bandpass.}
+\label{lastfilter}
+\end{figure}
+
+The input FM signal, after turned into an AM wave with an amplitude and
+frequency very well defined, reaches the RC filter for an extraction of
+what really is the audio signal. Now it is able to be the input of an
+amplifier before reaching our ears. 
+
+\section{Amplifier}
+
+Amplifiers are devices that enlarge the power of a given input, by a
+certain ratio called \emph{gain}, basically by the usage of
+\emph{Transistors} in association with resistors (See
+Fig.\ref{circuit2}). The one built here is known as Emitter-Follower.
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.53]{circ-2.png}
+\caption {Sketch of the circuit of an Amplifier built for this lab.} 
+\label{circuit2}
+\end{figure}
+
+\begin{table}[H]
+\center
+\begin{tabular}{|c|c|}
+\hline
+Electric Component    &   Value    \\ 
+\hline
+$C_{1}$ & $1 \ \mu F$ \\ 
+\hline
+$C_{2}$ & $1 \ \mu F$ \\ 
+\hline
+$C_{3}$ & $1 \ \mu F$ \\ 
+\hline
+$R_{1}$ & $3900 \ \Omega$ \\ 
+\hline
+$R_{2}$ & $470 \ \Omega$ \\ 
+\hline
+$R_{C}$ & $510 \ \Omega$ \\ 
+\hline
+$R_{E}$ & $220 \ \Omega$ \\ 
+\hline
+\end{tabular}
+\caption{Components specifications for the Amplifier circuit.} 
+\label{tab:1}
+\end{table}
+
+Again, $C_{2}$ is isolating the circuit from the DC current
+provided by the external source. $C_{1}$ also isolates this current from the
+RM Demodulator of the last section, that will provide the signal to be
+amplified. $C_{2}$ separates the amplifier from the speaker that will be
+playing the output of this circuit. The other components (including
+$C_{1}$, that plays another role here) are described
+in the following sections.
+
+\subsection{Transistors}
+
+Transistors are composed by 2 diodes that work under certain
+conditions. On the next diagram, a $BjT$ (\emph{Bipolar junction Transistors}) is presented with its terminals, $B$, $C$, and $E$. They are the Base, Collector and Emitter. The voltage difference between base and emitter ($V_{BE} \approx 0.6V$) is constante, so if $V_{in}$ drops, so does $V_{E}$, and will rise if $V_{in}$ incrieses:
+
+\begin{equation}
+V_{out}=V_{in}-V_{BE}.
+\label{V}
+\end{equation}
+The same between collector and emitter ($V_{CE} \approx 0.2V$). This is guaranteed by the collector, that allows the current to pass given a DC source ($+31.5 \text{ }V$). Both collector and emitter will cease the current and stop working if these conditions are not satisfied.
+
+\subsubsection{Biasing the Circuit}
+
+And how does the amplfication work? It is related to the current and the resistence at the terminals of the transistor. Once respected the relation of the previous equation, we have for the currents:
+
+\begin{equation}
+I_{E}=I_{C}+I_{B}, \text{ or }I_{E}=(\beta +1)I_{B},
+\label{I}
+\end{equation}
+where $\beta=I_{C}/I_{B}=60$, a nominal value of the used
+transistor. The key understanding is that, with a \emph{biasing source} as the
+$+31.5V$ used here, the current flow will be respecting the rules of
+Eq.'s(\ref{V}) and (\ref{I}) and won't care for the impedance of the
+load, in our case a speaker. It means that, even with a small current on
+the input $I_{B}$, provided by $V_{in}$, the current $I_{E}$ at
+$V_{out}$ will be a lot larger, in such a way that $I_{B}$ is negligible
+on Eq.(\ref{I}). 
+
+What does it mean in terms of power? Having a higher current flow means
+more energy ($Energy \ \alpha \ I^{2}$), so this and not a voltage gain is
+the responsible for amplifying the signal (as one can see from
+Eq.({\ref{V}), $V_{in}-V_{out}=V_{BE}=0.6$ is not a considerable
+  value).   
+
+Since, as discussed in the begining of Section 2.1, transistors only work if $V_{BE}$ is
+over a threshold, the values of $R_{1}$ and $R_{2}$ are chosen to be high in order to avoid too much current from
+the biasing voltage source to flow toward the base terminal, and
+guarantee its flow through collector and emitter. In addition to that,
+once specified the value of the biasing voltage source ($+31.5V$) and the
+impedance value of $Z_{C}=R_{C}$, $I_{C}$ is know from \emph{Ohm's Law}
+($V=RI$), and so is $I_{E}$ (see Eq.(\ref{I}), and recall that $I_{B}$
+is too small compared to $I_{C}$). For a given $Z_{E}$ it
+also means a known $V_{E}$.
+
+With the quantities calculated above, one can choose
+the right $R_{1}$ and $R_{2}$ to work as voltage deviders, and drop the
+voltage from the biasing source until the desired value for the terminal
+$V_{B}$. This will give the transistor the minimum value
+$V_{BE}=V_{B}-V_{E}$ to satisfy its working conditions, even if there's no voltage
+input $V_{in}$. 
+
+\subsubsection{Gain}
+
+To measure how much is the amplification, one can calculate the gain
+given by this configuration. It is the ratio of the impedance on the
+collector terminal and of the emitter termial. The impedance $Z_{C}$ on
+the collector is simply $R_{C}$. On the emitter, $Z_{E}$ it is the impedance of a
+resistor ($R_{E}$) in parallel association with a capacitor
+($C_{3}$). As a result:
+
+\begin{equation}
+g = \frac{Z_{C}}{Z_{E}}=\frac{R_C}{R_E}\sqrt{(1+R^{2}_{E}\omega^{2}C_{3}^{2})},
+\label{g}
+\end{equation}
+and one can choose $R_{E}$, $R_C$ and $C_{3}$ in order to achieve a 
+desired value for $g$ (see next graph).
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.32]{gain.png}
+\caption {Amplifier response related to the frequecy input. The gain is
+  higher for higher frquencies.} 
+\label{gain}
+\end{figure}
+
+As seen on Fig.(\ref{gain}), the gain is higher for higher
+frequencies. It is like this because the calculus of our gain, which
+evolves the impedances at the collector and emitter (see Eq.(\ref{g})), has to deal with the
+capacitor at the emitter's terminal, and it has a variable impedance that
+depends on the receiving frequency. 
+
+\subsection{Another RC Filter}
+
+This result for the gain is important because, despite all that has been
+said about $R_{1}$ and $R_{2}$ so far, together with
+$C_{1}$ they compose what is called a \emph{High Pass Filter}, located
+at the very begining of our circuit diagram.
+
+The filter described on Subsection 1.2.2 was a
+capacitor following a resistor creating a Low Pass. When the opposite is
+true, and a capacitor comes before the resistence, they work in such a
+way to have a maximum impedance for low frequencies. The cutoff
+frequency is again 
+
+\begin{equation}
+\omega_{3dB}=\frac{1}{RC}, 
+\label{3dB2}
+\end{equation}
+but due to the different configuration the result is as shown in
+Fig.(\ref{high}) (it is interesting to compare with Fig.(4)).
+
+This is totally reasonable since we are designing an audio amplifier, so
+we want it to operate frequencies on the range $20 \ Hz$ to $20k \
+Hz$. This is, as seen on Fig.(\ref{high}) ($x$ axis in log scale), \
+what this filter will provide. The bandwith that survives after it
+belongs to the range of $\approx \ 400Hz$ to higher than $20000 Hz$.
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.32]{high-pass.png}
+\caption {Amplifier response related to the frequecy input. The gain is
+  higher for higher frquencies.} 
+\label{high}
+\end{figure}
+
+\subsection{Impedances}
+
+In the overall, powering a circuit is a matter of giving more current than the input
+voltage $V_{in}$ provides, reaching the load with a
+factor called gain that increases it. Another way to understand this
+phenomena is realizing that the input has an impedance different from the
+output. For example, looking into the base one sees an \emph{input impedance} of
+$Z_{in}=R_{in} \beta$, while looking into the emitter sees an \emph{output impedance}
+smaller than that, equals to $Z_{out}=R_{out}/\beta$. In this case
+$R_{in}$ is any impedance connected to the emitter, and $R_{out}$ is
+whatever impedance connected to the base. 
+
+It tells the upcoming signal $V_{in}$ that the circuit has an impedance
+much larger than the one seen by the load, and that is why even with an
+small input current the voltage on the output is powered and we see an
+amplification of the original signal. 
+
+But impedances are relevant not only for power gain, but also to avoid
+its lost. In a \emph{Transmission Line}, a wire that propagates the
+signal from a source to a load, impedance matching is a key factor. It
+is true because the signal can reflect either with  positive or negative
+sign when finding a different impedance along its way. The reflection will
+be positive if there's a load with higher resistence than the one of the
+cable, and negative if the load has a lower resistence. Reflections are
+not desired since it causes interference with the upcoming waves, so to
+avoid this we seek for an impedance matching between source, cable and
+load.
+
+If we are to transmit the output of the amplifier to a speaker with a
+wire, we should look for the impedance of both. To calculate the
+impedance of a transmission line there's the following equation,
+
+\begin{equation}
+Z_{0}=\sqrt{\frac{L}{C}},
+\label{g}
+\end{equation}
+which is interesting since does not depend on the cable's length. The
+impedance of the speaker, as of other loads, is usually known. The
+objective is than look for a way to match the impedance of the cable
+with both source and load. But maximizing power transfer is not the same
+as maximizing power efficiency ($\eta$):
+  
+\begin{equation}
+\eta=\frac{R_{oad}}{R_{source}+R_{load}}=\frac{1}{1+\frac{R_{source}}{R_{load}}},
+\label{eta}
+\end{equation}
+showing that when $R_{laod}=R_{source}$ we have $\eta=0.5$.
+
+However, impedance mismatching can lead to excessive power use,
+distortion and noise problems. The most serious problems occur when the
+impedance of the load is too low, 
+requiring too much power from the source to drive the load with the
+signal. So the importance of matching impedances goes beyond just
+avoiding reflections, but as showed in Eq.(\ref{eta}) it does not mean a
+transmission of the total power from our amplifier.
+
+\section{Noise}
+
+Well built audio circuits will provide high audio fidelity. But the
+sound quality can be compromised by several factors, and the
+\emph{Noise} is one of them. The Johnson-Nyquist noise is characterized as the 
+thermal noise generated by the random motions of electrons on a resistor. This motion
+generates a resultant flow that is interpreted as a current by the
+circuit and a voltage appears. 
+
+The equation describing this phenomena is 
+\begin{equation}
+V^{2}=4K_{B}TBR,
+\label{v}
+\end{equation}
+where $K_{B}$ is the Boltzmann’s constant, $T$ the temperature of the
+resistor, $B$ is the frequency bandwidth of the measurement, 
+and $R$ is the resistance of the resistor. The Power signal ($P_{sig}$)
+generated is easily derived, since $P_{sig}=V^{2}/R$:
+\begin{equation}
+P_{sig}=4K_{B}TB.
+\label{p}
+\end{equation}
+
+This power will propagate though the circuit and be a source of noise
+for it. This is also known as the \emph{White Noise} of the circuit, and
+since the random motion of electrons is proportional to the temperature on the resistor,
+the higher it is more voltage will appear through it. Besides that,
+Eq.(\ref{p}) also tells that larger bandwith will increase the noise. So
+a way to reduce it is by either cooling the resistor or working with a
+smaller bandwith on our systems.
+
+\subsection{Fourrier Transform}
+
+\emph{Fourrier Transform} is a mathematical tool used to convert any
+signal from time domain to frequency domain and vice versa.
+If we analyse the voltage (or current) flowing over time on the resistence generating the
+noise and apply a Fourrier Transformation, we find a cutoff frequency
+for which this thermal noise will cease (which is normally high,
+$\approx50 \ Ghz$). And the power noise as a
+function of frequency ($P_{sig}(\omega)$) appears to be \emph{flat}, meaning that
+we usually receive the same amount of noise for a big range of
+frequency untill it starts cutting off around the cutoff frequency.
+
+Since our circuits usually operate under this cutoff frequency, we
+associate our noise to a determined bandwith of our system,
+\begin{equation}
+P_{sig}(t)=K_{B}TB,
+\label{last}
+\end{equation}
+and $B$ is the range of frequency determined by our low pass and high
+pass filters, for example. The drop of the $4$ from Eq.(\ref{p}) is
+because a source only maximize its power transfer to a load when we have an impedance
+matching, as discussed on Section 2.3. In order to have this power noise
+runing over the circuit, we can think the resistor generating it as a
+source, and the impedance of the circuit as a load. From Eq.(\ref{eta}),
+this impedance matching will provide a factor of $0.5$ over the voltage
+output and hence a factor of $0.25$ for $P_{sig}$.
+
+\subsection{Nature of Random Electrons}
+
+The thermal noise is a source of randomic error that acts over
+electrical circuits. But within the time it shows an amplitude
+distribution that corresponds toa  \emph{Gaussian}, what can be
+ilustrated with the \emph{Central Limit Theorem}. 
+
+This theorem says that the ensemble of variables from any random
+distribution emerges on a Gaussian on the limit of a large quantity of 
+sets of these variables. To prove so, a code based on a random
+distribution was developed to apply the Central Limit Theorem and the
+result is shown on Fig.(\ref{hists}).
+
+\begin{figure}[ht]
+
+  \centering
+
+  \begin{tabular}{cc}
+
+    % Requires \usepackage{graphicx}
+
+    \includegraphics[width=66mm]{hist1.png}&
+
+    \includegraphics[width=66mm]{hist2.png}\\
+
+    \includegraphics[width=66mm]{hist3.png}&
+
+    \includegraphics[width=66mm]{hist4.png}\\
+
+  \end{tabular}
+
+  \label{hists}\caption{These histograms show how the means
+    of sets with a given sample size, when added over and over n times, 
+  will approach a Gaussian Distribution, showing that the
+  Johnson-Nyquist noise will act with a gaussian profile over the
+  system.}
+
+\end{figure}
+
+Also, for any random distribution, a larger number of samples used to
+calculate the mean will result on a smaller standard deviation for the
+converged gaussian noise. This is islustrated by Fig.(\ref{std}), where
+a curve of the form 
+
+\begin{equation}
+\sigma = \frac{1}{\sqrt{N}}
+\label{p}
+\end{equation}
+
+was used to fit the data, $N$ being the number of samples and $\sigma$
+the standard deviation of these sample means. 
+
+This means, physically, that the averaged
+velocities of the electrons inside a resistor will add up n times until
+converge to a resultant value that is indeed different from
+zero and will be described by a gaussian. 
+Besides that, the larger is the number of electrons randomly
+contributing to this net velocity, smaller will be the standard
+deviation of this gaussian.   
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.32]{std.png}
+\caption {Standard Deviation of the mean of N random samples. Increasing
+N, the standard deviation drops as describe by the red line: $\sigma \ \alpha
+ \ 1/N$.} 
+\label{std}
+\end{figure}
+
+\section{Conclusion}
+
+\end{document}
