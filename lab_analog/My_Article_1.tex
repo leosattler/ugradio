@@ -11,7 +11,7 @@
 
 \title{Analog Circuit}
 \author{Leonardo Sattler Cassara, e-mail:leosattler@berkeley.com}
-\date{January 10, 2014}
+\date{February 10, 2014}
 \maketitle
 
 \begin{abstract}
@@ -20,6 +20,20 @@ radio demodulator and an amplifier. We understand the physics behind the transmi
 
 \end{abstract}
 
+\section{Introduction}
+
+Radio players deal with several electronic components that, added
+together on a certain order, will generate different features with huge
+physical meaning behind them. With the purpose of understanding the
+theory behind it, we describe separately the working of these
+components, and simulate their behavior with generated graphs. The plots
+are a way of picturing what happens inside these circuits.
+
+To play an FM signal is our main goal, but transmission, enhancement and
+lost of these signals are discussed, so as their impact over the system
+and how one generally deals with it. This is done with an statistical
+approach over some of these problems with developed codes
+in $Python$, and the results are physically interpreted.
 
 \section{FM Demodulator} 
 
@@ -320,7 +334,7 @@ said about $R_{1}$ and $R_{2}$ so far, together with
 $C_{1}$ they compose what is called a \emph{High Pass Filter}, located
 at the very begining of our circuit diagram.
 
-The filter described on Subsection 1.2.2 was a
+The filter described on Subsection 2.2.2 was a
 capacitor following a resistor creating a Low Pass. When the opposite is
 true, and a capacitor comes before the resistence, they work in such a
 way to have a maximum impedance for low frequencies. The cutoff
@@ -418,7 +432,7 @@ V^{2}=4K_{B}TBR,
 \label{v}
 \end{equation}
 where $K_{B}$ is the Boltzmann’s constant, $T$ the temperature of the
-resistor, $B$ is the frequency bandwidth of the measurement, 
+resistor, $B$ is the frequency bandwidth of the circuit
 and $R$ is the resistance of the resistor. The Power signal ($P_{sig}$)
 generated is easily derived, since $P_{sig}=V^{2}/R$:
 \begin{equation}
@@ -426,10 +440,10 @@ P_{sig}=4K_{B}TB.
 \label{p}
 \end{equation}
 
-This power will propagate though the circuit and be a source of noise
+This power will propagate through the circuit and be a source of noise
 for it. This is also known as the \emph{White Noise} of the circuit, and
 since the random motion of electrons is proportional to the temperature on the resistor,
-the higher it is more voltage will appear through it. Besides that,
+the higher it is more voltage will appear. Besides that,
 Eq.(\ref{p}) also tells that larger bandwith will increase the noise. So
 a way to reduce it is by either cooling the resistor or working with a
 smaller bandwith on our systems.
@@ -440,39 +454,41 @@ smaller bandwith on our systems.
 signal from time domain to frequency domain and vice versa.
 If we analyse the voltage (or current) flowing over time on the resistence generating the
 noise and apply a Fourrier Transformation, we find a cutoff frequency
-for which this thermal noise will cease (which is normally high,
+for which this thermal noise will cease (which high,
 $\approx50 \ Ghz$). And the power noise as a
 function of frequency ($P_{sig}(\omega)$) appears to be \emph{flat}, meaning that
 we usually receive the same amount of noise for a big range of
-frequency untill it starts cutting off around the cutoff frequency.
+frequency, untill it starts cutting off (around the cutoff frequency).
 
 Since our circuits usually operate under this cutoff frequency, we
-associate our noise to a determined bandwith of our system,
+associate our noise to a determined bandwith,
 \begin{equation}
-P_{sig}(t)=K_{B}TB,
+P_{sig}=K_{B}TB,
 \label{last}
 \end{equation}
 and $B$ is the range of frequency determined by our low pass and high
 pass filters, for example. The drop of the $4$ from Eq.(\ref{p}) is
 because a source only maximize its power transfer to a load when we have an impedance
-matching, as discussed on Section 2.3. In order to have this power noise
+matching, as discussed on Section 3.3. In order to have this power noise
 runing over the circuit, we can think the resistor generating it as a
 source, and the impedance of the circuit as a load. From Eq.(\ref{eta}),
 this impedance matching will provide a factor of $0.5$ over the voltage
 output and hence a factor of $0.25$ for $P_{sig}$.
 
-\subsection{Nature of Random Electrons}
+\subsection{Random Electrons}
 
 The thermal noise is a source of randomic error that acts over
 electrical circuits. But within the time it shows an amplitude
-distribution that corresponds toa  \emph{Gaussian}, what can be
+distribution that corresponds to a  \emph{Gaussian}, what can be
 ilustrated with the \emph{Central Limit Theorem}. 
 
-This theorem says that the ensemble of variables from any random
-distribution emerges on a Gaussian on the limit of a large quantity of 
-sets of these variables. To prove so, a code based on a random
-distribution was developed to apply the Central Limit Theorem and the
-result is shown on Fig.(\ref{hists}).
+This theorem says that, on the limit of a large quantity of 
+sets of some variables from any random distribution, the ensemble of
+these sets emerges on a Gaussian distribution. To prove so, a code 
+was developed to apply the Central Limit Theorem 
+to a distribution created with a randomic range of integers 
+by the usage of the \emph{numpy.random} function in \emph{Python}.
+The result is shown on Fig.(8).
 
 \begin{figure}[ht]
 
@@ -482,13 +498,13 @@ result is shown on Fig.(\ref{hists}).
 
     % Requires \usepackage{graphicx}
 
-    \includegraphics[width=66mm]{hist1.png}&
+    \includegraphics[width=71mm]{hist1.png}&
 
-    \includegraphics[width=66mm]{hist2.png}\\
+    \includegraphics[width=71mm]{hist2.png}\\
 
-    \includegraphics[width=66mm]{hist3.png}&
+    \includegraphics[width=71mm]{hist3.png}&
 
-    \includegraphics[width=66mm]{hist4.png}\\
+    \includegraphics[width=71mm]{hist4.png}\\
 
   \end{tabular}
 
@@ -496,7 +512,9 @@ result is shown on Fig.(\ref{hists}).
     of sets with a given sample size, when added over and over n times, 
   will approach a Gaussian Distribution, showing that the
   Johnson-Nyquist noise will act with a gaussian profile over the
-  system.}
+  system. Histogram 1, with $n=200$, has a randomic shape that is not
+  much of a gaussian. As $n$ grows, untill $n=15000$ on
+  Histogram 4, we see the gaussian profile taking form over the mean occurrences.}
 
 \end{figure}
 
@@ -509,27 +527,78 @@ a curve of the form
 \sigma = \frac{1}{\sqrt{N}}
 \label{p}
 \end{equation}
-
 was used to fit the data, $N$ being the number of samples and $\sigma$
 the standard deviation of these sample means. 
 
-This means, physically, that the averaged
-velocities of the electrons inside a resistor will add up n times until
-converge to a resultant value that is indeed different from
-zero and will be described by a gaussian. 
-Besides that, the larger is the number of electrons randomly
+Physically speaking, the averaged
+velocities of the electrons inside a resistor will add up $n$ times until
+converge to a resultant value, that is different from
+zero and will be described by a gaussian.  
+Besides that, the larger is the $N$ number of electrons randomly
 contributing to this net velocity, smaller will be the standard
-deviation of this gaussian.   
+deviation of this gaussian.    
+
+A possible way to experimentally check the
+Johnson-Nyquist noise is to plug a cable on a resitor, properly heat it
+and check the noise appearing on an osciloscope or powermeter. 
+Since this signal is supposed to be small, amplifiers are required to
+enhance it. However, some points as impedance matching and the signal
+noise of the own amplifiers must be observed, since it must be
+signficantly small compared to the resistor's noise and a person might want
+to use more than one to get more gain. Another problem is
+choosing a filter that will supply the correct bandwith for the used
+amplifiers, filtering their signal before reaching the osciloscope.
+
+If the result is not an increase of the noisy signal as you plug your
+resistor to end of the cable, something is amiss. Even if following
+these conditions, one must recall that the \emph{Signal to Noise Ratio} is what
+comes into play while trying to observe the resistor's noise above the
+noise generated by your configuration. A deeper study over this can
+drive more general explanations. For example, the information transmission, on
+a system of a specified bandwith in the presence of a gaussian noise, 
+will be the maximum according to the \emph{Shannon-Hartley
+  Theorem}. These are relevant subjects to be understood while conducting this experiment.  
 
 \begin{figure}[H]
 \center
 \includegraphics[scale=0.32]{std.png}
 \caption {Standard Deviation of the mean of N random samples. Increasing
 N, the standard deviation drops as describe by the red line: $\sigma \ \alpha
- \ 1/N$.} 
+ \ 1/\sqrt{N}$.} 
 \label{std}
 \end{figure}
 
 \section{Conclusion}
 
+In this lab, the construction of circuits was very important to
+understand the physical concepts behind electronic equipments, and this
+was achieved by applying the knowladge of different associations between
+indutors, capacitors, and resistors, also by understanding the working
+of a diode and a transistor. As seen on the Fig.'s (3), (4), (6) and
+(7), the theoretical plots were consistent with the experimental results
+read on the oscilospe, when analysing the difference between input and
+output signal over the buit devices.
+
+We can firmly state that the specified values used on Tables 1 and 2
+were propperly chosen, since both FM Demodulator and Amplifier were
+giving the expected output on the osciloscopes. 
+More than that, they were attached together and plugged into a
+speaker, tunned to a FM station and the result was as expected: an
+amplified audio signal (music!). By decoupling the
+circuit of Fig.(5) from the one of Fig.(1), the volume was lower as
+expected.
+
+The Johnson-Nyquist noise profile over the circuit was well descibed by
+the presented graphs, as a result of the developed code 
+(sent together with this lab report), that provided the 
+physical association between the Central Limit Theory and the thermal
+noise. 
+
+The experimental difficulties related to the proof of this phenomena
+were presented, and relevant topics about the theory of signal
+propagation and detection were cited, as starting points to 
+overcome these difficulties.
+
 \end{document}
+
+
