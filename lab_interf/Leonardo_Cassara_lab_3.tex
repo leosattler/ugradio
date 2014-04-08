@@ -1,0 +1,651 @@
+\documentclass{article}
+\usepackage{amsmath,amsfonts}
+\usepackage{graphicx}
+\usepackage[margin=1.0in,letterpaper]{geometry}
+\usepackage{float}
+\usepackage{hyperref}
+%\usepackage{subfigure}
+
+% are used to denote commments, everything after it on this line is a comment and while not be processed 
+
+\begin{document}
+
+\title{Basic Interferometry}
+\author{Leonardo Sattler Cassara, e-mail:leosattler@berkeley.edu}
+\date{April 7, 2014}
+\maketitle
+
+\begin{abstract}
+
+The idea in this lab is to understand the working of an
+interferometer. We use two antennas with a baseline separation of $10 /
+meters$, operating with a spectral resolution of about $11 / GHz$. With
+this interferometer, using $Python$ codes to remotely control this pair,
+we point to three kinds of objects: the sun, the moon and a point
+source. Exploring the least square fitting procedure, we collect data for
+these three sources and find quantities related to the observation. For
+three different point sources (Virgo A, Orion Nebula and M17) we calculate
+the baseline separation. For the Sun and the Moon, we evaluate their
+radius. 
+
+\end{abstract}
+
+\section{Introduction}
+
+In astrometry, terferometry is known as the practice of using two or
+more radio telescopes. It is a powerful method, since based on the
+geometry of the equipments and the distance between them, we can achieve
+a good frequency resolution. In this lab, we use our interferometer
+configuration and perform the data analysis, recovering some of these
+informations and finding some informations about the geometry of our sources.
+
+In section 2, we introduce some of the quantities related to
+interferometry that are largelly explored in this experiment, introduce
+relevant ideas and
+understand the working of this instrument. 
+
+In section 3, via the \emph{PyEphem} module, we develop codes for the rotation
+matrices, used to manipulate the coordinates of our targets. Also, we
+outline the basic procedure to track an object and store data during our
+observations, done in \emph{Python} using functions from the provided
+\emph{radiolab} module.
+
+In the remaining sections, we analyse the collected data, present the
+general procedures and later discuss the results. 
+
+\section{The Interferometer}
+
+Our interferometer is a pair of antennas separated by a baseline $B = 10
+/meters$ working at a about $\nu = 10.7 / GHz$. By definition, the spectral
+resolution of this instrument is given by
+
+\begin{equation}
+R = \frac{\lambda}{B},
+\label{eq:spec_res}
+\end{equation} 
+
+also known as fringe spacing. Since our antennas are spaced by a vector $\vec{B}$ on
+the east-west direction, as the source moves in the sky they receive
+different signal (amount of photons) during the time of
+observation. It defines the \emph{geometric delay}, $\tau_{g}$, defined as:
+\begin{equation}
+\tau_{g} = \frac{\vec{B} \cdot \hat{s}}{c},
+\label{eq:tau}
+\end{equation}  
+where $\hat{s}$ is a unit vector representing the distance from one of
+the antennas, so each of them has a $\tau_{g}$. These quantities are
+labelled in Fig.1. 
+
+What this interferometer does is to multiply the two
+signals using a mixer (a couple of mixers and amplifiers, in fact),
+giving a result that is proportional to the flux of the source. This is
+done by correlating the signals, say $E_{1}$ and $E_{2}$, that are
+intrinsically proportional to the time of observation (hence, $tau$):
+\begin{equation}
+E(t)_{1} = cos(2 \pi \nu t), \text{ } E(t)_{2} = cos(2 \pi \nu t + \tau_{tot}),
+\label{eq:ampl}
+\end{equation} 
+where $\tau_{tot} = \tau_{g} + \tau_{c}$ takes into account a constant delay
+$\tau_{c}$ given by the cable length.
+
+To take into account the unit vector to the source, we write our
+geometrical delay in terms of the position of the source in the sky, its
+hour angle $h_{s}$:
+\begin{equation}
+\tau_{g}(h_{s})=\left[\frac{B}{c}cos\delta \right]sinh_{s},
+\label{eq:tau_ha}
+\end{equation} 
+and $\delta$ is the source's declination, which is fixed for sources as
+Virgo A, Orion and M 17, but varies for the Sun and the Moon on a day. 
+
+One thing about correlation: it ends up zeroing signals that are noise,
+so our result is dependent of the brightness of our sources and not from
+the sky. So the product of our interferometer is $E_{1} \times E_{2}$:
+\begin{equation}
+F(t) = cos(2 \pi \nu t)cos(2 \pi \nu t[t+ \tau_{tot}]),
+\label{eq:imp}
+\end{equation} 
+what, in term of the hour angle $h_{s}$ is:
+\begin{equation}
+F(t) = cos(2 \pi \nu[\tau_{g}(h_{s}) + \tau_{c}]).
+\label{eq:very_imp}
+\end{equation} 
+This previous equation is very important. It describes the \emph{fringe
+  pattern}, a quantity that is really important to analyse any data from
+the interferometer. 
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.42]{interf.jpg}
+\caption {Geometrical description of our interferometer. Credits:
+  Radiolab \emph{casper} website.} 
+\label{Fig:1}
+\end{figure}
+
+\section{Using Our Instrument} 
+
+The interferometer is controlled by a code using the \emph{radiolab}
+module, which tracks the source in specified intervals and also 
+performs a homing (gets back to rest position)  when set to. During data aquisition, our antennas will be following 
+the objects as it rotates with the
+Celestial Sphere. To describe an object's
+position in the sky, it all depends on the \emph{Coordinate System} one
+uses. Our antennas track given values in the \emph{Horizontal Coordinate
+System} (\emph{Azimuth} and \emph{Altitude}), while the objects
+positions are initially given in the \emph{Equatorial Coordinate System} (\emph{Right Ascention} and \emph{Declination}). So, first of all, we build
+mathematical tools that will perform a change of coordinates for our
+tracking procedure.
+
+\subsection{Rotation Matrices} 
+
+Although astronomical objects pass by in the sky as the Earth rotates,
+if you look at a catalog
+we have some of these objects specified at fixed points in the sky. As
+said previously, it all depends on the Coordinate System you are looking
+at, since each one of them have different characteristics (most
+important, the origin). 
+
+As said before, our antennas will track Azimuth (\emph{az}) and
+Altitude (\emph{alt}) values of the object, but only after specified
+their Right Ascentions (\emph{ra}) and Declinations (\emph{dec}), which
+we get from catalogs. But, for the Sun and the moon, since
+these values will vary within a day, we enter new values in
+the Equatorial System each time we evaluate their value in the
+Horizontal System. Reason: the origin of the Equatorial System is the
+point where the Sun cross the Equator at the Spring's Equinox, known as
+\emph{Vernal Point}. Since the
+Sun change its position relative to this point
+during the year (as goes through its path in the sky, the Eclipt), 
+it will have relevant variations in a
+day. This effect is even greater for the Moon, due to its proximity to
+the Earth. For distant sources as stars and other galaxies, the variation of
+this point would be accounted due to the Earth's spin variation, the
+Precession, that ends up moving the origin of this system since the
+Equator changes in relation to the Eclipt. But the Precession is
+negligible in a day, so only the Sun and Moon will have different ra's
+and dec's at each measurement of the interferometer.
+
+To perform the change of coordinates, we will make a two-step transformation described by
+the following equation:
+\begin{equation}
+\mathbf{R}_{(\alpha, \delta) \rightarrow (az, alt)}=\mathbf{R}^{2}_{(ha, \delta) \rightarrow
+  (az, alt)} \cdot \mathbf{R}^{1}_{(\alpha, \delta)
+  \rightarrow (ha, \delta)},
+\label{eq:conv}
+\end{equation}
+where we are first applying $R^{1}$ that does not change the Coordinate
+System, but simply rerwites the Azimuth of the object into Hour Angle
+via the simple relation $ha = lst - \alpha$. $lst$ is our \emph{Local Sidereal
+Time}, calculated via the \emph{PyEphem} and the \emph{Time} modules in
+\emph{Python}. Our $R^{1}$ matrix is then defined as
+
+\begin{equation}
+\mathbf{R^{1}} =
+ \begin{bmatrix}
+  cos(lst) & sin(lst) & 0 \\
+  sin(lst) & -cos(lst) & 0 \\  
+  0 & 0 & 1
+ \end{bmatrix}.
+\end{equation}
+
+At second, we apply $R^{2}$, and since $(ha, \delta)$ are Earth-based
+coordinates, this matrix depends only on our terrestrial latitude
+$\phi$: 
+
+\begin{equation}
+\mathbf{R^{2}} =
+ \begin{bmatrix}
+  -sin(\phi) & 0 & cos(\phi) \\
+  0 & -1 & 0 \\  
+  cos(\phi) & 0 & sin(\phi)
+ \end{bmatrix},
+\end{equation}
+$\phi$ being $37.87 \ degrees$.
+
+So $R$ is comprised of these two matrices, that we use to solve the
+equation $\vec{r'}_{(az,alt)}=\textbf{R} \times
+\vec{r}_{(\alpha,\delta)}$. To build our $\vec{r}$ vector, we use our
+values of $(\alpha,\delta)$:
+
+\begin{equation}
+\vec{r} =
+ \begin{bmatrix}
+  cos(\delta) \times cos(\alpha) \\
+  cos(\delta) \times sin(\alpha)  \\  
+  sin(\delta) 
+ \end{bmatrix},
+\end{equation}
+in order to work with the angles in rectangular coordinates and apply
+the rotation.
+
+The output of Eq.(7) applied to Eq.(10), $\vec{r'}_{(az,alt)}=\textbf{R} \times
+\vec{r}_{(\alpha,\delta)}$, will then be a $3 \times 1$ matrix,
+$\vec{r'}_{3 \times 1}$, and our $(az,alt)$ will be evaluated as
+follows:
+
+\begin{equation}
+\begin{gathered}
+az = \arctan{\left(\frac{\vec{r'}_{2,1}}{\vec{r'}_{1,1}}\right)}, \\
+alt = \arcsin{(\vec{r'}_{3,1})}.
+\end{gathered}
+\label{eq:3_f}
+\end{equation} 
+
+The codes that built the rotation matrices and performed the
+Coordinate System
+transformation, that were used through the data aquisition for the analyzed objects, can be found at my \emph{Github} account \href{https://github.com/leosattler/ugradio/tree/master/lab_interf}
+{here}.
+
+\subsection{The Controlling Codes} 
+
+The values of Eq.(\ref{eq:3_f}) are the input of our codes to control
+the antennas. For so, together with the support of the \emph{Time}
+module, we imported the \emph{radiolab} module and developed a code that
+performed the data aquisition for this lab. Using the
+function \emph{pntTo}, which takes the arguments (alt,az), we pointed
+the antennas to a desired position in the sky. Since the
+Earth rotates at a speed of $15$ degrees per hour, we call this function
+every $30 \ seconds$ to keep track of our objects. Besides that, we perform a homing every $1 \
+hour$ because, after around $100$ pointing commands, the interferometer starts to
+loose precision on doing this task. 
+
+This all is done via a \emph{thread} in our codes. Another \emph{thread}
+is set to run to record the data via the function \emph{recordDVM}. This
+function stores the data in \emph{.npz} files with the following information: the Right Ascention ($ra$)
+of the object in decimal hours, the Declination ($dec$) in
+decimal degrees, the
+voltage measurement of our sources, in units of $[V]^{2}$ (see Eq.(5)),
+and the Local Sidereal Time ($lst$) (in decimal hours)  
+and the Julian Date ($jd$) (in decimal days) at the time of the measurement.
+
+The developed codes that controlled the telescope for the Moon, Sun and
+point sources, storing the data as it performed the pointing at
+desired intervals, can be found in my \emph{Github} account
+\href{https://github.com/leosattler/ugradio/tree/master/lab_interf}{here}. 
+
+\section{Point Sources}
+
+We analyze measurements for three point sources: Orion Nebula, Virgo A
+and M17. As outlined before, the output of a measurement is the product
+of the intensities seen by both antennas, as in Eq.(6). Using
+trigonometry identities, we can rewrite Eq.(6) into another meaningful
+equation:
+
+\begin{equation}
+F(h_{s})=Acos\left[2\pi \left(\frac{B}{\lambda}cos(\delta)\right)sin(h_{s}) \right]
+- Bsin \left[2\pi \left(\frac{B}{\lambda}cos(\delta)\right)sin(h_{s})\right],
+\label{meanin}
+\end{equation} 
+where $A$ and $B$ are constants that replace the values $cos(2\pi \nu
+\tau_{c})$ and $sin(2\pi \nu \tau_{c})$, respectively. Also, the $\nu$
+from the previous equation was written as $\lambda$ via the relation $c =
+\lambda \nu$. This is still the
+fringe pattern, but now presented only with values that can be directly
+measured from our interferometer configuration and source's position in
+the sky. Our objective here is to perform a least square in our data and
+determine the A and B values. For so, we write into the arguments of the
+$cos$ and $sin$ the follwing value:
+
+\begin{equation}
+C = 2\pi\left(\frac{B}{\lambda}cos(\delta)\right),
+\label{eq:1}
+\end{equation}
+also known as the \emph{fringe frequency} $f_{f}$ for our point
+sources. 
+
+To proceed with the least square fitting, we outline:
+
+$\cdot$ Our values for $F(h_{s})$ are stored in our data as $volts$.
+
+$\cdot$ We can get the corresponding values for $h_{s}$ from our source data by
+subtracting its $lst$ values at each 
+measurement by the $ra$ of this
+source.
+
+$\cdot$ Relevant physical values are:
+
+\begin{table}[H]
+\center
+\begin{tabular}{|c|c|c|}
+\hline
+\multicolumn{3}{|c|}{Information Table}\\
+\hline
+Targets   & $ra$ & $dec$ \\ 
+\hline
+Orion & $5^{h}34^{m}17.3s$ & $-05^{\circ}23'28''$\\ 
+Virgo A & $12^{h}30^{m}49.423s$ & $+12^{\circ}23'28.04''$\\ 
+M17 & $18^{h}20^{m}26s$ & $-16^{\circ}10.6'$\\ 
+\hline
+\multicolumn{3}{|c|}{$B = 10 \ meters$}\\
+\hline
+\multicolumn{3}{|c|}{$\lambda = 0.028 \ meters$}\\
+\hline
+\end{tabular}
+\caption{Relevant quantities to perform the least square fit.} 
+\label{tab:1}
+\end{table}
+
+\subsection{Managing Data}
+
+Our measurements are the products of measured intesities from the two
+antennas. Besides astronomical effects, such as small brightness from
+the sources, problems related to the instrument require a previous
+manipulation of our data before any analysis. First of all, not all
+intensities not corresponding to the source are zeroed out, so our data
+comes with a lot of noise. The electric equipment ends up adding some
+information as well, such as the DC offset. 
+
+Some problems are due to the tracking/homing procedure. Our
+tracking might not be optimal, so our measurements are not preciselly
+what we theoretically expect. Also, the homing give spikes of minima
+though the data, so we start our analysis by getting rid of them.
+
+Fig.(\ref{m17}) shows the data before and after the manipulation. The top plot
+is the data for Orion with a fitting curve in red. This function is
+evaluated using a window and finding the average of values inside this
+window and storing the result in the center. By subtracting the measured
+volts by this curve we end up with a smoother data, much more reliable
+to work with. Also, the spikes from the top plot were eliminated since
+they are not actual measurements, but a result of the homing process.
+ 
+This was done for the three point sources, and also for the Sun and the
+moon. Now we may proceed to the least square using this smoothed data. 
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.37]{M_17_manip.png}
+\caption {Data manipulation for M17. The red curve on the top plot is
+  done by finding averages of a window across the data. The bottom plot
+  is the measured data minus the red curve, giving a smoothed function.} 
+\label{m17}
+\end{figure}
+
+\subsection{Least Square for Point Sources}
+
+Given the values of Table 1 and the information from our data, our least
+square is done to solve for the
+coefficients $A$ and $B$. But they are constants that tell about the
+amplitude of our measurements, and our goal here is to find quantities
+that we can compare to previously measured values ($B$, for example). So
+we proceed as follows:
+
+$\mathbf{1.}$ We make a 'guess' for $C$ (Eq.(13)) based on our
+information from Table 1, and create an array around this value.
+
+$\mathbf{2.}$ for each element inside this array, we will evaluate an
+$A$ and $B$ in order to have a fit and calculate the residuals.
+
+$\mathbf{3.}$ By plotting the square of the residuals against our array
+of $C's$, we can find the one that minimizes the curve and assume this is
+our best $C$ representation.
+
+With this value that minimizes the squared residuals, $C_{min}$, we get
+back to Eq.(13) and evaluate the baseline separation $B$. This is the
+procedure done for each source, and the resulting plots are presented next.
+
+On Fig.(3) one least square fit for Orion is presented (in red). The
+bottom plot is a zoom that shows how is the behavior of our least square
+fit compared to the data. Although this
+result seems not to be actually fitting the measurements, since the data
+is noisy and hard to describe, not necessarily this fit will not be able to
+statistically give informations about our data. In fact we move on with
+this fit and calculate the residuals.
+
+Fig.(4) is a graphical repesentation of the method for evaluation of
+$C_{min}$. Plotted on the $y \ axis$ we have the square of the residuals
+for the performed least squares of Orion, done for each value of $C$
+(plotted on the $x \ axis$). When the $y$ value reaches a minimum, it
+means that the function evaluated has the closest value to our
+data. With the $C$ corresponding to this minimum, we refer back to
+Eq.(13) and, assuming known $cos(\delta)$ and known $\lambda$, we solve
+for the corresponding baseline $B$. 
+
+The least square plot for the other point sources are at my
+\emph{Github} account page, on the folder called
+\emph{lab\_interf}. On Table 2 the evaluated $C_{min}$ and baselines $B$
+are presented.
+
+\begin{table}[H]
+\center
+\begin{tabular}{|c|c|c|}
+\hline
+\multicolumn{3}{|c|}{Final Evaluated Quantities}\\
+\hline
+Target    & $C_{min}$ &  Baseline ($B$)   \\ 
+\hline
+Orion &  $352.5695$ & $9.9156$ \\ 
+Virgo A & $320.8382$  & $9.1973$ \\
+M17 & $341.0037$ & $9.9417$ \\ 
+\hline
+\end{tabular}
+\caption{Evaluated values for each point source.} 
+\label{tab:1}
+\end{table}
+
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.37]{Orion_lq.png}
+\caption {Least Square fit for Orion. The bottom plot is a zoom of the
+  top one, to evidentiate the fitting pattern.} 
+\label{m17}
+\end{figure}
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.37]{sqr_res_orion.png}
+\caption {Plot of the squared residuals for each value of C. The green
+  line spot the value where the squaerd residuals reach a minima,
+  corresponding to a good value of C (that best describes the data).} 
+\label{m17}
+\end{figure}
+
+\section{Sun and Moon}
+
+For the Sun and the Moon we get some particularities that changes our
+process of taking and analysing the data. First of all, as discussed
+before, their Right Ascention and Declination change within a day, so
+their tracking function is different from the one used to the point
+sources, since keep updating their ra and dec from time to time. 
+
+About the data analysis, these objects are in fact resolved in the sky,
+which means that their angular size are appreciable hence are not perceived
+as a dot by our interferometer beam. What it does to the data is that
+our fringe pattern will have an amplitude variation. As
+the Sun and the Moon move through the sky, the contribution of both
+antennas will eventually get cancelled. An equation that describes this
+effect is 
+
+\begin{equation}
+R(h_{s})=F(h_{s}) \times \int I(\Delta h)cos(2 \pi f_{f} \Delta h)
+d\Delta h,
+\label{mod}
+\end{equation} 
+where we see from Eq.(\ref{meanin}) that the first factor is the point
+source fringe, and the second is a modulator. $I$ is the intensity of
+the source, $\Delta h = h - h_{s}$ is the hour angle $h$ relative to the
+$h_{s}$ of the source center and $f_{f}$ is the fringe frequency, a very
+important quantity to be discussed on the followinf sections. 
+This second factor had to be taken into account for
+extended sources, while for objects as Virgo, M 17 and Orion, $\Delta h
+=0$ and we had $R(h_{s}) = F(h_{s})$ for them. 
+
+\subsection{Least Square for Sun and Moon}
+
+Here we investigate the modulation of our data. Zeros of this modulation
+should occur when integral number of fringe periods occur inside the
+source width, where there will be an equal contribution of negative and
+positive values of the fringe, leading to a net integral equals to zero.
+
+The next plot shows the Sun and Moon data, presenting the expected
+oscilation, specially for the Sun (top plot).  
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.36]{sun_moon.png}
+\caption {Plot of Sun (top) and Moon (bottom). Their shape are modulated
+by the factor presented on Eq.(\ref{mod}), and compared to the point
+source data it indeed shows a variation of its amplitude.} 
+\label{Fig:3}
+\end{figure}
+
+We now apply a least square to the Eq.(\ref{mod}) to determine the
+fringe modulator function. Initially we are suppose to find an optimal
+value for $\phi$ in the follwing equation:
+
+\begin{equation}
+F(h_{s}) = cos(2\pi \frac{B}{\lambda}  cos(\delta)  sin(ha) + \phi),
+\label{modd}
+\end{equation} 
+
+where $\phi$ is the phase offset of the fringe source, and $F(h_{S})$
+describes the amplitude of the data. This equation is achieved via
+trigonometry functions from the Eq.(\ref{mod}).
+
+We now choose a window of values from our data that contains an apparent
+drop of amplitude being exposed (see Fig.(\ref{sun_win}) and Fig.(\ref{moon_win})). We solve a least square by fitting a
+parabola to the data from this window, and, similarlly to what was done
+to calculate $C_{min}$, we get an optimal value for $\phi$ from a
+range of guesses, by storing the sum of the squared residuals for
+different least squares with different $\phi's$, and later with a plot
+we spot the $\phi_{min}$ that minimizes the residuals.
+
+Our parabola for the least square is like the following:
+
+\begin{equation}
+X =
+ \begin{pmatrix}
+  F(h_{s}) & F(h_{s}) \times ha & F(h_{s}) \times ha^{2} \\
+  F(h_{s}) & F(h_{s}) \times ha & F(h_{s}) \times ha^{2}\\  
+  F(h_{s}) & F(h_{s}) \times ha & F(h_{s}) \times ha^{2}
+ \end{pmatrix},
+\end{equation}
+based on the hour angle measurements of our object (here, either the Sun
+or the Moon). After finding the $\phi_{min}$, we proceed to a last least
+square fit and get a shape of what would best describe the parabola of
+the window. This optimized shape has the information of one of the zeros
+across our data, described by the fringe frequency,
+
+\begin{equation}
+f_{f} = \left(\frac{B}{\lambda}cos(\delta)\right)cos(h_{s}).
+\label{f_f}
+\end{equation} 
+The index of the minimum value of this parabola fit, presented on the bottom
+of Fig.6 for the Sun and of Fig.7 for the Moon, will give the values we use to calculate the
+previous quantity $f_{f}$ for each of them, since the declination and the hour angle
+($h_{s} = lst - \alpha$) corresponding to this index indeed represent
+a point where our data reaches a minimum.
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.37]{sun_win.png}
+\caption {Figure showing the selected window position (top), the
+  envelope fitting (middle), and the final least square fitting (bottom)
+  for the Sun.} 
+\label{sun_win}
+\end{figure}
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.37]{moon_win.png}
+\caption {Figure showing the selected window position (top), the
+  envelope fitting (middle), and the final least square fitting (bottom)
+  for the Moon.} 
+\label{moon_win}
+\end{figure}
+
+\subsection{The Modulating Function and Results} 
+
+The fringe modulator of Eq.(\ref{mod}) can be evaluated by a numerical
+solution of an integral
+that only depends on our fringe frequency $f_{f}$ and on the Radius of
+the source $R$. This integral solution is an approximation of a Bessel Function,
+which is the result of a Fourier Transform of a circle. This is expected
+since \emph{the modulating function is a Fourier Transform of the source intensity
+distribution on the sky}. The integral is defined as (see handout for
+further details): 
+
+\begin{equation}
+MF_{theory} \approx \frac{R}{N} \sum
+_{n=-N}^{n=+N}\left[1-\left(\frac{n}{N}\right)\right]^{1/2}cos\left(\frac{2\pi
+    f_{f}Rn}{N}\right).
+\label{M_f}
+\end{equation} 
+Since this integral only depends on the product $Rf_{f}$, the zero
+occurances will give important information about the source
+structure, since they occur, as commented previously, when the whole
+disk of the Sun (or of the Moon) are providing a minimum on their
+data.  
+
+The next plot shows the approximation of a Bessel function for the
+Sun. At each zero crossing we can evaluate $R$, since it will correspond
+to a zero at Eq.(\ref{M_f}), hence the argument of the $cos$ must be
+one, and since all values inside this function are constant, the
+variation is given by our product $Rf_{f}$ that can be solved for $R$
+since we know $f_{f}$ from Eq.(\ref{f_f}). One can compare the zero
+positions on this graph with the minimum positions along the Sun's data on
+the top of Fig.'s (5) or (6), and try to guess which one corresponds to which.
+
+\begin{figure}[H]
+\center
+\includegraphics[scale=0.37]{bess_sun.png}
+\caption {Sun's modulating function. Each zero crossing is a minima on
+  the Sun's data, corresponding to a number tha makes possible the
+  evaluation of the Radius of the sun for a known $f_{f}$.} 
+\label{Fig:3}
+\end{figure}
+
+The next Table presents the evaluated svalues for the Radius of the Sun and the Moon:
+
+\begin{table}[H]
+\center
+\begin{tabular}{|c|c|c|c|}
+\hline
+\multicolumn{4}{|c|}{Final Evaluated Quantities}\\
+\hline
+Target    & $f_{f}$ & $R$ in Radians & $R$ in arcmin \\ 
+\hline
+Sun & $115.786669$ & $0.004318$ &  $14.844190$\\ 
+Moon & $356.302406$  & $0.004209$ & $14.469476$ \\
+\hline
+\end{tabular}
+\caption{Results for the Sun and Moon.} 
+\label{tab:1}
+\end{table}
+
+\section{Conclusion}
+
+In this lab we learned the working of an interferometer by dealing with
+its physical properties, and via data analysis we recovered informations
+about the instrument and source's geometry. And, in order to perform
+data aquisition, we went through Coordinate Systems, so that we were
+able to use the \emph{radiolab} module and control the interferometer
+antennas. These procedures were correctly done, based on the reliability
+of our data and the decent values for the evaluated quantities,
+evidenciating the success of the developed codes.
+
+For the point sources, the values for Virgo A are much different from
+the expected, $B = 10 \ meters$, reaching $91.97\%$ of the expected
+value, while for Orion we achieved $99.15\%$ and for M 17 $99.41\%$ as
+estimatives of the nominal value for the baseline. It can be justified
+by the fact that, the greater the brighness of the source, more
+information about it we collect, hence more reliable are our
+measurements. For the three of them, Virgo A is the one with the smallest
+value of \emph{Flux Density} ($\sim 34 \ Jy$), while Orion, our second best
+estimative, has ($\sim 340 \ Jy$), and M17, our best result, has ($\sim
+500 \ Jy$).
+
+Also, these results indicate that, although the fitting from the least
+square procedure was not ideal (see Fig.(3)), it indeed was able to
+provide statistical informations that allowed us to find reasonable
+values.
+
+The extended sources had values around the minimum expected. For the
+Sun, the found value is around $93.95\%$ of the minimum angular size of
+the Sun in the sky. For the Moon, it is $98.76\%$ from its minimum
+size, what is a good estimative. For the Sun, the chosen window was the
+first zero of our data, and for the Moom it was the second one. 
+
+\end{document}
+
+
