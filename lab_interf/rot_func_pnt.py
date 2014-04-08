@@ -5,7 +5,7 @@ import time
 
 ###########################
 # Leonardo Sattler Cassara
-# Rotation Matrix - Sun
+# Rotation Matrix - Point Sources
 ###########################
 
 def convert():
@@ -20,8 +20,8 @@ def convert():
 
     lst = float(obs.sidereal_time()) ## local sidereal time
 
-    sun = ephem.Sun()
-    sun.compute(obs)
+    #moon = ephem.Moon()
+    #moon.compute(obs)
 
 ## Defining the matrices
 
@@ -89,11 +89,13 @@ def convert():
 
 ##### Working with input ######
 
-    #x = ra*np.pi/180.
-    #y = dec*np.pi/180.
+    ## Using M17 as target ##
 
-    x = float(sun.ra) # For the sun.ra, already in radians
-    y = float(sun.dec) # For the sun.dec, already in radians
+    x = 5.+(35./60.)+(17.3/3600) # RA of Orion, in hours
+    x = x*15*np.pi/180. # RA of Orion, in radians
+
+    y = -(5. + 23.*0.0167 +28.*0.000277) # DEC of Orion, in degrees
+    y = y*np.pi/180 # DEC of Orion, in radians
 
     M = np.array([0.,0.,0.], dtype=float)
     M[0] = np.cos(y)*np.cos(x)
@@ -107,8 +109,6 @@ def convert():
 
     alt = np.arcsin(Rot_2[2])
     
-    #return sun.compute(obs)
-
     if az < 0.:
         return np.arctan2(Rot_2[1],Rot_2[0]) +2*np.pi, alt
     else:
